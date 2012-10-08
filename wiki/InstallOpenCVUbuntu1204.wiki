@@ -8,12 +8,12 @@ A detail of how to get OpenCV applications running on an Ubuntu machine.
 
 = Steps =
 
-  #Installation: Open a terminal and input the following. 
+  1. Installation: Open a terminal and input the following. 
 {{{
 sudo apt-get install build-essential libopencv-* opencv-doc python-opencv python-numpy
 }}}
 
-  #Build examples: 
+  2. Build examples: 
 {{{
 mkdir examples ; cd examples
 cp -r /usr/share/doc/opencv-doc/examples .
@@ -23,7 +23,7 @@ sh build_all.sh
 }}}
 Note: Not all examples work. To build cpp examples copy build_all.sh to cpp folder, extract all .gz files and then run the script like before. 
 
-  #Run a sample: 
+  3. Run a sample: 
 {{{
 ./facedetect
 }}}
