@@ -1,5 +1,5 @@
 #labels Phase-Requirements,Software
-#Installing OpenCV 2.31 and building sample applications.
+# Installing OpenCV 2.31 and building sample applications.
 
 = Introduction =
 
@@ -8,12 +8,12 @@ A detail of how to get OpenCV applications running on an Ubuntu machine.
 
 = Steps =
 
-#Installation: Open a terminal and input the following. 
+  #Installation: Open a terminal and input the following. 
 {{{
 sudo apt-get install build-essential libopencv-* opencv-doc python-opencv python-numpy
 }}}
 
-#Build examples: 
+  #Build examples: 
 {{{
 mkdir examples ; cd examples
 cp -r /usr/share/doc/opencv-doc/examples .
@@ -23,7 +23,7 @@ sh build_all.sh
 }}}
 Note: Not all examples work. To build cpp examples copy build_all.sh to cpp folder, extract all .gz files and then run the script like before. 
 
-#Run a sample: 
+  #Run a sample: 
 {{{
 ./facedetect
 }}}
