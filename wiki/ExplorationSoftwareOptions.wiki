@@ -17,15 +17,21 @@ The main questions and options to be explored:
 
    Fast Thresholding:
    http://www.aishack.in/2011/05/a-super-fast-thresholding-technique/
+
    Detect circles
    http://www.aishack.in/2010/04/hough-circles-in-opencv/
+
    Detect corners
    http://www.aishack.in/2010/05/corner-detection-in-opencv/
+
    Creating guis
    http://www.aishack.in/2010/02/highgui-creating-interfaces/
+
    Resize Image 
    http://linuxconfig.org/resize-an-image-with-opencv-cvresize-function
+
    Grab lower res image
    http://stackoverflow.com/questions/8339077/decrease-image-resolution-in-opencv
+
    HSV explained
    http://132.68.58.138/labs/anat/hsvspace.pdf
