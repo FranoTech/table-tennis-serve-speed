@@ -18,7 +18,7 @@ sudo apt-get install build-essential libopencv-* opencv-doc python-opencv python
 mkdir examples ; cd examples
 cp -r /usr/share/doc/opencv-doc/examples .
 cd c
-gunzip *
+gunzip *.gz
 sh build_all.sh
 }}}
 Note: Not all examples work. To build cpp examples copy build_all.sh to cpp folder, extract all .gz files and then run the script like before. 
