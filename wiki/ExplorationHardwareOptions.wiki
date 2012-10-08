@@ -1,4 +1,4 @@
-#labels Phase-Requirements
+#labels Phase-Requirements,hardware
 #Here we detail the exploration of a hardware solution. 
 
 = Introduction =
