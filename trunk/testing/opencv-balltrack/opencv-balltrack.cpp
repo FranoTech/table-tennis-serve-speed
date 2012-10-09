@@ -4,6 +4,9 @@ A simple example of object tracking using thresholding. Takes live video
 from webcam and draws a line where it sees the image. The threshold image
 can also be seen.
 
+Press spacebar to clear yellow line. Esc to exit. 
+Slide bars can be moved to accurately determine the best min and max values.
+
 Compile on Ubuntu 12.04:
 g++ `pkg-config opencv --cflags` opencv-balltrack.cpp -o balltrack `pkg-config --libs opencv`
 
@@ -15,20 +18,26 @@ Run:
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-IplImage* GetThresholdedImage(IplImage* img)
+IplImage* GetThresholdedImage(IplImage* img, int h_min, int s_min, int v_min, int h_max, int s_max, int v_max)
 {
 	// Convert the image into an HSV image
     IplImage* imgHSV = cvCreateImage(cvGetSize(img), 8, 3);
     cvCvtColor(img, imgHSV, CV_BGR2HSV);
-	IplImage* imgThreshed = cvCreateImage(cvGetSize(img), 8, 1);
+    IplImage* imgThreshed = cvCreateImage(cvGetSize(img), 8, 1);
 	//get rid of all colours not in range low-upper bound
-	cvInRangeS(imgHSV, cvScalar(20, 100, 100), cvScalar(30, 255, 255), imgThreshed);
-	cvReleaseImage(&imgHSV);
+    cvInRangeS(imgHSV, cvScalar(h_min, s_min, v_min), cvScalar(h_max, s_max, v_max), imgThreshed);
+    cvReleaseImage(&imgHSV);
     return imgThreshed;
 }
 
 int main()
 {
+    int h_min =0;
+    int s_min =0;
+    int v_min =0;
+    int h_max =180;
+    int s_max =255;
+    int v_max =255;
 	// Initialize capturing live feed from the camera
     CvCapture* capture = 0;
     capture = cvCaptureFromCAM(0);
@@ -43,6 +52,14 @@ int main()
 	// The two windows we'll be using
     cvNamedWindow("video");
     cvNamedWindow("thresh");
+    cvNamedWindow("variables");
+       //create trackbars so that we can test colour ranges faster
+    cvCreateTrackbar("hue_min", "variables", &h_min, 180, NULL);
+    cvCreateTrackbar("saturation_min", "variables", &s_min, 255, NULL);
+    cvCreateTrackbar("value_min","variables",&v_min,255,NULL);
+    cvCreateTrackbar("hue_max", "variables", &h_max, 180, NULL);
+    cvCreateTrackbar("saturation_max", "variables", &s_max, 255, NULL);
+    cvCreateTrackbar("value_max","variables",&v_max,255,NULL);
 	
 	// This image holds the "scribble" data...
     // the tracked positions of the ball
@@ -64,7 +81,7 @@ int main()
         }
 		
 		// Holds the yellow thresholded image (yellow = white, rest = black)
-        IplImage* imgYellowThresh = GetThresholdedImage(frame);
+        IplImage* imgYellowThresh = GetThresholdedImage(frame, h_min, s_min, v_min, h_max, s_max, v_max);
 		
 		// Calculate the moments to estimate the position of the ball
         CvMoments *moments = (CvMoments*)malloc(sizeof(CvMoments));
@@ -100,11 +117,18 @@ int main()
         cvShowImage("video", frame);
 		// Wait for a keypress
         
-		int c = cvWaitKey(10);
+	int c = cvWaitKey(10);
         if(c!=-1)
         {
-            // If pressed, break out of the loop
-            break;
+	    if(c==27)
+	    {
+            	// If pressed, break out of the loop
+            	break;
+            }
+            if(c=32)
+            {
+                imgScribble = cvCreateImage(cvGetSize(frame), 8, 3);
+            }
         }
 		
 		// Release the thresholded image+moments... we need no memory leaks.. please
