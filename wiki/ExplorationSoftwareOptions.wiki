@@ -38,3 +38,6 @@ The main questions and options to be explored:
 
    HSV explained
    http://132.68.58.138/labs/anat/hsvspace.pdf
+
+   Get difference between two frames
+   http://sublimated.wordpress.com/2011/01/25/image-difference-with-opencv/
