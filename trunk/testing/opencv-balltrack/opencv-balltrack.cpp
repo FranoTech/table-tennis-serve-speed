@@ -122,11 +122,12 @@ int main()
         {
 	    if(c==27)
 	    {
-            	// If pressed, break out of the loop
+            	// If esc char pressed, break out of the loop
             	break;
             }
             if(c=32)
             {
+                //If space bar pressed, clear line from image
                 imgScribble = cvCreateImage(cvGetSize(frame), 8, 3);
             }
         }
