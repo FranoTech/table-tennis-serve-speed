@@ -47,17 +47,19 @@ int main()
 	// Initialize capturing live feed from the camera
     CvCapture* capture = 0;
     capture = cvCaptureFromCAM(0);
-    if(CUST_RES)
-    {
-        cvSetCaptureProperty(capture,CV_CAP_PROP_FRAME_WIDTH,RES_H);
-        cvSetCaptureProperty(capture,CV_CAP_PROP_FRAME_HEIGHT,RES_V);
-    }
- 
+
     // Couldn't get a device? Throw an error and quit
     if(!capture)
     {
         printf("Could not initialize capturing...\n");
         return -1;
+    }
+
+    //if CUST_RES set to 1 then set resolution, otherwise use default
+    if(CUST_RES)
+    {
+        cvSetCaptureProperty(capture,CV_CAP_PROP_FRAME_WIDTH,RES_H);
+        cvSetCaptureProperty(capture,CV_CAP_PROP_FRAME_HEIGHT,RES_V);
     }
 	
 	// The two windows we'll be using
