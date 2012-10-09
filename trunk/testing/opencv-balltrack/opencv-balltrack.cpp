@@ -14,6 +14,12 @@ Run:
 ./balltrack
 
 */
+
+//set the camera resolution grab is CUST_RES set to 1
+#define CUST_RES 1
+#define RES_H 640
+#define RES_V 480
+
 #include "stdio.h"
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -41,6 +47,11 @@ int main()
 	// Initialize capturing live feed from the camera
     CvCapture* capture = 0;
     capture = cvCaptureFromCAM(0);
+    if(CUST_RES)
+    {
+        cvSetCaptureProperty(capture,CV_CAP_PROP_FRAME_WIDTH,RES_H);
+        cvSetCaptureProperty(capture,CV_CAP_PROP_FRAME_HEIGHT,RES_V);
+    }
  
     // Couldn't get a device? Throw an error and quit
     if(!capture)
