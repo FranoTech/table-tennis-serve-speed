@@ -13,6 +13,7 @@ The main questions and options to be explored:
   * *Can we get a suitable camera at a reasonable price:* 60fps seems to be the maximum frame rate we can find for a consumer grade webcam. A potentially suitable example is listed here: http://www.pixmania.ie/ie/uk/11946366/art/computer-gear/12mp-web-cam-and-micropho.html If we need a higher frame rate there are reasonably affordable high-speed cameras that we could use but it would be unlikely we could do real time analysis with it: http://www.pixmania.ie/ie/uk/9636355/art/casio/exilim-high-speed-ex-zr10.html 
 
   * *How should we track the ball:* To be filled in
+  * *How high should we mount the camera* This may be a problem
   * *Useful Tutorials:* 
 
    Tracking Coloured Objects
