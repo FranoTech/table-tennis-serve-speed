@@ -9,7 +9,7 @@ import py2exe
 #have to include typelib numbers from /Lib/site-packages/win32com/genpy/ (delete contents, run script then not numbers.
 
 
-setup(console=[{'script': 'test1.py'}], 
+setup(windows=[{'script': 'test1.py'}], 
     options={ 
         'py2exe': 
         { 
