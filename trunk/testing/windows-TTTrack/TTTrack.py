@@ -19,6 +19,7 @@ from Tkinter import *
 #http://code.activestate.com/recipes/82965-threads-tkinter-and-asynchronous-io/
 #http://matteolandi.blogspot.ie/2012/06/threading-with-tkinter-done-properly.html
 
+
 #Serial Port Utility Functions
 #########################################
 
@@ -39,6 +40,7 @@ def generatePortsTuple():
     return ports if len(ports) > 0 else tuple(["No Ports"])
 
 ##########################################
+
 
 class App:
 
@@ -102,9 +104,13 @@ class App:
         print portselection
         print self.current_port.get()
 
-#the following runs main application loop
+#Main application loop set up and run
+#######################################
+
 root = Tk()
 root.title("Table Tennis Speed Tracker")
 root.geometry("680x145")
 app = App(root)
 root.mainloop()
+
+########################################
