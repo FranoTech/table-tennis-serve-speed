@@ -1,5 +1,6 @@
 import pyttsx
 import serial
+from Tkinter import *
 
 #usage of text to speech engine:
 #engine = pyttsx.init()
@@ -8,6 +9,11 @@ import serial
 #engine.runAndWait()
 
 #scan() returns the [(number,portstr), ...] of each available port
+
+#need to asyn monitor serial port 
+#http://stackoverflow.com/questions/459083/how-do-you-run-your-own-code-alongside-tkinters-event-loop
+#http://code.activestate.com/recipes/82965-threads-tkinter-and-asynchronous-io/
+#http://matteolandi.blogspot.ie/2012/06/threading-with-tkinter-done-properly.html
 
 def scan():
    # scan for available ports. return a list of tuples (num, name)
@@ -22,9 +28,9 @@ def scan():
    return available
  
 def generatePortsTuple():
-    return tuple([port for num, port in scan()])
+    ports = tuple([port for num, port in scan()]) 
+    return ports if len(ports) > 0 else tuple(["No Ports"])
 
-from Tkinter import *
 
 class App:
 
@@ -46,14 +52,16 @@ class App:
         self.speechOnOff.pack(side=LEFT)
 
     def speechChanger(self):
+        #may not be necessary
         print self.speech_enabled.get()
     
     def updateSerialPort(self, portselection):
         print portselection
         print self.current_port.get()
 
-
-#run main application loop
+#the following runs main application loop
 root = Tk()
+root.title("Table Tennis Track")
+root.geometry("450x200")
 app = App(root)
 root.mainloop()
