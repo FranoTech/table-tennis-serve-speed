@@ -6,7 +6,7 @@ import py2exe
 
 #had to include things manually as they show up. 
 
-#have to include typelib numbers from /Lib/site-packages/win32com/genpy/ (delete contents, run script then not numbers.
+#have to include typelib numbers from /Lib/site-packages/win32com/genpy/ (delete contents, run script then get numbers.
 
 
 setup(windows=[{'script': 'test1.py'}], 
