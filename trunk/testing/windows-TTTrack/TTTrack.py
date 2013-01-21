@@ -10,6 +10,7 @@ from Tkinter import *
 #Tk tutorials
 #http://www.tkdocs.com/tutorial/index.html
 
+#thread safe one element queue to hold most recent result
 serial_data = Queue.Queue(1)
 
 #Serial Port Communication Thread
@@ -43,6 +44,14 @@ def generatePortsTuple():
     ports = tuple([port for num, port in scan()]) 
     return ports if len(ports) > 0 else tuple(["No Ports"])
 
+#Calculate Speeed based on microseconds and distance
+#############################################
+
+def calc_speed(microseconds, distance_in_m):
+    #1m/s = 3.6 km/h
+    return ( float(distance_in_m) * 3.6 ) / (float(microseconds) * float(10 ** -6) )
+    
+#############################################
 
 class App:
     
@@ -53,6 +62,7 @@ class App:
         
         self.sbartext = StringVar(self.frame)
         self.current_port = StringVar(self.frame)
+        
         self.speech_enabled = IntVar(value=1)
         
         #Setup serial ports / options
@@ -78,10 +88,20 @@ class App:
         self.engine = pyttsx.init()
         
         self.speechOnOff = Checkbutton(self.frame, 
-                                        text="Talk when new speed detected",
+                                        text="Talk",
                                         variable=self.speech_enabled
                                         )
         self.speechOnOff.pack(side=LEFT)
+        
+        #Distance input in metres
+        self.distance = Label(self.frame,
+                               text="Distance (m):"
+                              )
+        self.speechOnOff.pack(side=LEFT, fill=X)  
+        
+        self.input_dist = Entry(self.frame)
+        self.input_dist.pack(side=LEFT)
+        self.input_dist.insert(0, "0.6")
 
         #Exit Button
         self.button = Button(self.frame, 
@@ -110,11 +130,12 @@ class App:
     
     def readSensor(self):
         if serial_data.full():
-                self.sbartext.set(str(serial_data.get()))
+                speed = '{0:.2f}'.format(calc_speed(serial_data.get(), self.input_dist.get()))
+                self.sbartext.set( speed + ' km/h')
                 serial_data.task_done()
                 self.frame.update()
                 if self.speech_enabled.get():
-                    self.engine.say(self.sbartext.get() + " kilometres per hour")
+                    self.engine.say(speed + " kilometres per hour")
                     self.engine.runAndWait()
         self.frame.after(50, self.readSensor)
     

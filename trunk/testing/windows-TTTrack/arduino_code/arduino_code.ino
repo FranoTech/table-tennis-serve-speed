@@ -23,7 +23,25 @@ void setup()
 
 void loop()
 {
-  result.val = 0xFFFFFFFF;
+  result.val = 0xFFFFF;
   sendResult();
-  delay (1000);
+  delay (10000);
+  result.val = 0xFFFF;
+  sendResult();
+  delay (10000);
+  result.val = 0xFFF;
+  sendResult();
+  delay (10000);
+  result.val = 0xFF;
+  sendResult();
+  delay (10000);
+  result.val = 0xFF;
+  sendResult();
+  delay (10000);
+  result.val = 0xF;
+  sendResult();
+  delay (10000);
+  result.val = 0x1;
+  sendResult();
+  delay (10000);
 }
