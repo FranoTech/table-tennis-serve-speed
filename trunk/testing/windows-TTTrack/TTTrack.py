@@ -1,5 +1,5 @@
 import pyttsx
-import serial
+
 import struct
 import thread
 import Queue
@@ -120,7 +120,7 @@ class App:
                                        bd = 1,
                                        relief = SUNKEN,
                                        anchor = W,
-                                       bg = "red",
+                                       bg = "#FF3300",
                                        textvariable = self.sbartext,
                                        font=("Helvetica", 64)
                                        )
