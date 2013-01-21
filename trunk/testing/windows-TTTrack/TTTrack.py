@@ -6,6 +6,8 @@ import Queue
 from time import sleep
 from Tkinter import *
 
+#look at using grid to lay this out!
+#http://zetcode.com/gui/tkinter/layout/
 
 #Tk tutorials
 #http://www.tkdocs.com/tutorial/index.html
@@ -67,7 +69,8 @@ class App:
         
         #Setup serial ports / options
         
-        self.current_port.set(generatePortsTuple()[0])
+        ports = generatePortsTuple()
+        self.current_port.set(ports[0])
         
         if self.current_port.get() == "No Ports":
           self.sbartext.set("No Sensor")
@@ -79,7 +82,7 @@ class App:
         
         self.serialports = OptionMenu(self.frame, 
                                       self.current_port, 
-                                      *generatePortsTuple(), 
+                                      *ports, 
                                       command=self.updateSerialPort
                                       )
         self.serialports.pack(side=LEFT)
@@ -97,7 +100,7 @@ class App:
         self.distance = Label(self.frame,
                                text="Distance (m):"
                               )
-        self.speechOnOff.pack(side=LEFT, fill=X)  
+        self.distance.pack()  
         
         self.input_dist = Entry(self.frame)
         self.input_dist.pack(side=LEFT)
