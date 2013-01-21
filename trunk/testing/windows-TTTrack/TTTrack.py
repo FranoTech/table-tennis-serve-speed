@@ -1,35 +1,51 @@
-import pyttsx
+#!python2.7
+# -*- coding: utf-8 -*-
 
+"""
+Author: Fergal O Grady
+E-mail: fergalogrady@gmail.com
+This application communicates with an arduino attached to two custom light gates
+It receives the time in microseconds and calculates speed based on distance travelled / time
+
+"""
+
+from Tkinter import Tk, W, E, StringVar, IntVar
+from ttk import Frame, Button, Label, Style, OptionMenu, Checkbutton
+from ttk import Entry
+import serial
+import pyttsx
 import struct
 import thread
+import threading
 import Queue
 from time import sleep
-from Tkinter import *
 
-#look at using grid to lay this out!
-#http://zetcode.com/gui/tkinter/layout/
-
-#Tk tutorials
-#http://www.tkdocs.com/tutorial/index.html
-
-#thread safe one element queue to hold most recent result
-serial_data = Queue.Queue(1)
 
 #Serial Port Communication Thread
 #######################################
 
+#thread safe one element queue
+serial_data = Queue.Queue(1)
+
+lo = threading.Lock()
+thread_exit = threading.Event()
+
 def SerialMonitorThread(port):
     ser = serial.Serial(port,9600)
-    while(1):
+    while not lo.locked():
         if ser.read() == 'H':
             answer = struct.unpack('I', ser.read(4))[0]
         if ser.read() == 'E':
             serial_data.put(answer)
+    ser.close()
+    thread_exit.set()
+    thread.exit()
+
 
 #Serial Port Utility Functions
 #########################################
 
-def scan():
+def scanPorts():
    # scan for available ports. return a list of tuples (num, name)
    available = []
    for i in range(256):
@@ -43,8 +59,9 @@ def scan():
  
 def generatePortsTuple():
     #returns ('COMX','COMY', ... or ('No Ports',)
-    ports = tuple([port for num, port in scan()]) 
+    ports = tuple([port for num, port in scanPorts()]) 
     return ports if len(ports) > 0 else tuple(["No Ports"])
+
 
 #Calculate Speeed based on microseconds and distance
 #############################################
@@ -52,108 +69,123 @@ def generatePortsTuple():
 def calc_speed(microseconds, distance_in_m):
     #1m/s = 3.6 km/h
     return ( float(distance_in_m) * 3.6 ) / (float(microseconds) * float(10 ** -6) )
-    
+
+
+#Main application
 #############################################
 
-class App:
-    
-    def __init__(self, master):
 
-        self.frame = Frame(master)
-        self.frame.pack()
-        
-        self.sbartext = StringVar(self.frame)
-        self.current_port = StringVar(self.frame)
-        
-        self.speech_enabled = IntVar(value=1)
-        
-        #Setup serial ports / options
-        
-        ports = generatePortsTuple()
-        self.current_port.set(ports[0])
+class App(Frame):
+  
+    def __init__(self, parent):
+        Frame.__init__(self, parent)   
+         
+        self.parent = parent
+        self.initVar()
+        self.initUI()
+        self.engine = pyttsx.init()
+        self.readSensor()
+    
+    def initVar(self):
+        self.status_text = StringVar(self)
+        self.status_text.set("Initializing")
+
+        self.available_ports = generatePortsTuple()
+        self.current_port = StringVar(self)
+        self.current_port.set(self.available_ports[0])
         
         if self.current_port.get() == "No Ports":
-          self.sbartext.set("No Sensor")
+          self.status_text.set("No Sensor")
         else:
           thread.start_new_thread(SerialMonitorThread, (self.current_port.get(),))
-          self.sbartext.set("Awaiting reading")
-          
-        # Set up serial port option menu
-        
-        self.serialports = OptionMenu(self.frame, 
-                                      self.current_port, 
-                                      *ports, 
+          self.status_text.set("Awaiting reading")
+
+        self.input_distance = StringVar(value="0.6")
+        self.speech_enabled = IntVar(value=1)
+
+    def initUI(self):
+    
+      self.parent.title("Table Tennis Speed Tracker")
+
+      Style().configure("TMenubutton", padding=(5, 0, 5, 0), 
+          font='serif 10')
+
+      self.columnconfigure(0, pad=5)
+      self.columnconfigure(1, pad=5)
+      self.columnconfigure(2, pad=5)
+      self.columnconfigure(3, pad=5)
+      
+      self.rowconfigure(0, pad=3)
+      self.rowconfigure(1, pad=3)
+      
+      self.statusBar = Label(self,
+                        font='Helvetica 50',
+                        foreground="#E8E8E8",
+                        background="#A31919",
+                        textvariable=self.status_text,
+                        
+                        )
+      self.statusBar.grid(row=0, columnspan=4, sticky=W+E)
+      
+      self.serialPortList = OptionMenu(self,
+                                      self.current_port,
+                                      self.current_port.get(),
+                                      *self.available_ports,
                                       command=self.updateSerialPort
                                       )
-        self.serialports.pack(side=LEFT)
+      self.serialPortList.grid(row=1, column=0)
+      #print self.serialPortList.winfo_class()
 
-        #Text to speech on/off button
-        self.engine = pyttsx.init()
-        
-        self.speechOnOff = Checkbutton(self.frame, 
-                                        text="Talk",
-                                        variable=self.speech_enabled
-                                        )
-        self.speechOnOff.pack(side=LEFT)
-        
-        #Distance input in metres
-        self.distance = Label(self.frame,
-                               text="Distance (m):"
-                              )
-        self.distance.pack()  
-        
-        self.input_dist = Entry(self.frame)
-        self.input_dist.pack(side=LEFT)
-        self.input_dist.insert(0, "0.6")
+      self.distanceLabel = Label(self,
+                                 text="Distance (m):",
+                                 padding=(10,0,0,0)
+                            )
+      self.distanceLabel.grid(row=1, column=1, sticky=E) 
 
-        #Exit Button
-        self.button = Button(self.frame, 
-                              text="QUIT", 
-                              fg="red", 
-                              command=self.frame.quit
-                              )
-        self.button.pack(side=RIGHT)
+      self.distanceEntry = Entry(self,
+                                 textvariable=self.input_distance)   
+      self.distanceEntry.grid(row=1, column=2, sticky=W)
 
-        #Status bar setup
-        self.sbarframe = Frame(master)
-        self.sbarlabel = Label(self.sbarframe,
-                                       bd = 1,
-                                       relief = SUNKEN,
-                                       anchor = W,
-                                       bg = "#FF3300",
-                                       textvariable = self.sbartext,
-                                       font=("Helvetica", 64)
-                                       )
-        self.sbarframe.pack(side = BOTTOM, fill = X)
-        self.sbarlabel.pack(fill = X)
+      self.speechButton = Checkbutton(self, 
+                                      text="Speak Results",
+                                      variable=self.speech_enabled,
+                                      padding=(10,0,5,0)
+                                      )
+      self.speechButton.grid(row=1, column=3)       
+      
+      self.pack()
+
+    def updateSerialPort(self, port_choice):
+      #stop current serial Monitor Thread and start new one for selected port. 
+      if not self.status_text.get() == "No Sensor":
+        lo.acquire(True)
+        thread_exit.wait()
+        lo.release()
+        if self.current_port.get() == "No Ports":
+          self.status_text.set("No Sensor")
+        else:
+          thread.start_new_thread(SerialMonitorThread, (self.current_port.get(),))
+          self.status_text.set("Awaiting reading")
+        thread_exit.clear()
         
-        #Start reading sensor values
-        self.readSensor()
 
-    
     def readSensor(self):
-        if serial_data.full():
-                speed = '{0:.2f}'.format(calc_speed(serial_data.get(), self.input_dist.get()))
-                self.sbartext.set( speed + ' km/h')
-                serial_data.task_done()
-                self.frame.update()
-                if self.speech_enabled.get():
-                    self.engine.say(speed + " kilometres per hour")
-                    self.engine.runAndWait()
-        self.frame.after(50, self.readSensor)
-    
-    def updateSerialPort(self, portselection):
-        #this does nothing yet but should restart serial port thread with new port
-        print portselection
-        print self.current_port.get()
+      if serial_data.full():
+        speed = '{0:.2f}'.format(calc_speed(serial_data.get(), self.input_distance.get()))
+        self.status_text.set( speed + ' km/h')
+        serial_data.task_done()
+        self.update()
+        if self.speech_enabled.get():
+          self.engine.say(speed + " kilometres per hour")
+          self.engine.runAndWait()
+      self.after(50, self.readSensor)
 
-#Main application loop set up and run
-#######################################
+def main():
+  
+    root = Tk()
+    app = App(root)
+    root.mainloop()  
 
-root = Tk()
-root.title("Table Tennis Speed Tracker")
-root.geometry("680x145")
-app = App(root)
-root.mainloop()
 
-########################################
+if __name__ == '__main__':
+    main()  
