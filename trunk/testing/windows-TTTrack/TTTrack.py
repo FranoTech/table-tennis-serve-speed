@@ -18,7 +18,7 @@ import struct
 import thread
 import threading
 import Queue
-from time import sleep
+
 
 
 #Serial Port Communication Thread
