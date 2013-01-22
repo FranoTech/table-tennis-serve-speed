@@ -1,22 +1,38 @@
 from distutils.core import setup
 import py2exe
-#usage python setup.py py2exe 
+import os
 
-#had to install library with setup.py install_lib option to make it a module that could be imported
+"""
+Author: Fergal O' Grady
+Email: Fergal O' Grady
 
-#had to include things manually as they show up. 
+Usage: python setup.py py2exe 
+	Contents of 'dist' directory should allow for
+	standalone execution on any Windows operating system.
 
-#have to include typelib numbers from /Lib/site-packages/win32com/genpy/ (delete contents, run script then get numbers.
+Notes:
+	-Had to install library with setup.py install_lib option 
+	to make it a module that could be imported
+	-Had to include things manually as they show up in errors. 
+	-Have to include typelib numbers 
+	from /Lib/site-packages/win32com/genpy/ 
+	(delete contents, run script then get numbers.
+	-Manually includes mfc90.dll
+"""
 
+mfcdir = "C:\Python27\Lib\site-packages\pythonwin"
+dll_to_include = [os.path.join(mfcdir, 'mfc90.dll')]
 
-setup(windows=[{'script': 'TTTrack.py'}], 
-    options={ 
-        'py2exe': 
-        { 
-            "typelibs": [('{C866CA3A-32F7-11D2-9602-00C04F8EE628}',0,5,4)],
-            'includes': ['pyttsx', 'pyttsx.drivers.sapi5'], 
-        } 
-    } 
+setup(	windows=[{'script': 'TTTrack.py'}],
+		data_files = dll_to_include,
+    	options=
+    	{ 
+        	'py2exe': 
+        	{ 
+            	"typelibs": [('{C866CA3A-32F7-11D2-9602-00C04F8EE628}',0,5,4)],
+            	'includes': ['pyttsx', 'pyttsx.drivers.sapi5'], 
+        	} 
+    	} 
 ) 
 
 """
