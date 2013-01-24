@@ -1,82 +1,129 @@
 /*
- * Max count in result.val: 4294967295 
- * This will use Timer 1. No PWM on pin 9, 10.  
- * Registers:
- * TCNT1 -stores timer count (set to zero to reset)
- * TIMSK1 = 0x01 is Interrupt Mask Register for Timer 1, we need to enable overflow interrupt, so we set LSB to 1
- * TCCR1A - reset all bits to enable normal timer mode.
- * TCCR1B register’s 3 first bits saves value of counter clock prescaler
- * By setting TCCR1B register to 0×04 we using /256 prescaler.
- * Overflow period = 1/16Mhz * Prescaler * 2^16 = seconds
- * TCCR1B |= (1 << CS12);    // 256 prescaler 
- * TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
- * cli() disables interrupts
- * sei() enaables interrupts
+Target: Arduino Uno
+Site: code.google.com/table-tennis-serve-speed
+Desc: Arduino is attached to two specially designed light gates
+      One on pin 2 and the other on pin 3
+      A 'FALLING' edge on pin two starts Timer1
+      A 'FALLING' edge on pin three stops Timer 1
+      and triggers serial communication to host program
+      TTTrack.py running on windows client. 
+Author: Fergal O' Grady
 
- 2  External Interrupt Request 0  (pin D2)          (INT0_vect)
- 3  External Interrupt Request 1  (pin D3)          (INT1_vect)
+*Global Interrupts:
+  cli() disables interrupts
+  sei() enables interrupts
 
- void TimerOne::stop()
-{
-  TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12));          // clears all clock selects bits
-}
+*TIMER1:
+Registers:
+  TCNT1: Stores current timer count
+         Set to 0 to reset
+  TIMSK1: Timer1 Interrupt Mask Register
+          TOIE1 = TIMSK1[0] = Timer overflow interrupt enable bit 
+          TIMSK1 |= _BV(TOIE1) ; enables timer one overflow interrupt
+  TCCR1A: Timer1 Control Register A
+          Set to 0x00 for normal 16 bit counter operation
+  TCCR1B: Timer1 Control Register B
+          TCCR1B[0:2] - Control clock prescalar
+          16 * 10^6 Hz Clock
+          **We will set Clk/64 giving a 4 us resolution
+          **Timer one will overflow every 0.26214 seconds
+          CS12  CS11  CS10  :Mode
+          0     0     0      No clock source (stop)
+          0     0     1      Clk/1 (Clock ticks 16*10^6 times per second )
+          0     1     0      Clk/8
+          0     1     1      Clk/64
+          1     0     0      Clk/256
+          1     0     1      Clk/1024      
+          1     1     0      External clock on T1 pin. Falling Edge
+          1     0     1      External clock on T1 pin. Rising Edge
+Examples:
+  Stop Timer 1:
+    TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12)); 
+  Set prescalar to 256:
+    TCCR1B |= (1 << CS12);    // 256 prescaler 
+Notes:
+  *Overflow period = 1/16Mhz * Prescaler * 2^16 = seconds
+  *Max count in result.val: 4294967295    (2^16 - 1)
+  *No PWM on pin 9, 10 when Timer 1 in use
 
+*External Interrupts:
+  INT0 - ISR(INT0_vect) - Digital pin 2 
+  INT1 - ISR(INT1_vect) - Digital pin 3
+
+  EICRA - [0:1] INT0 
+          [2:3] INT1
+      ISC11 ISC10 Interrupt 1
+      0     0     The low level of INT1 generates an interrupt request
+      0     1     Any logical change on INT1 generates an interrupt request
+      1     0     The falling edge of INT1 generates an interrupt request
+      1     1     The rising edge of INT1 generates an interrupt request
+
+      ISC01 ISC00  Description
+      0     0      The low level of INT0 generates an interrupt request
+      0     1      Any logical change on INT0 generates an interrupt request
+      1     0      The falling edge of INT0 generates an interrupt request
+      1     1      The rising edge of INT0 generates an interrupt request
+  EIMSK - [0] INT0 enable bit
+          [1] INT1 enable bit
+
+Use of _BV function:
+  PORTD &= ~_BV(3)   -- PORTD = PORTD AND (BITWISE NOT (00000100))
+  #define LED_ON() PORTB |= _BV(LED_PIN)
+  #define LED_OFF() PORTB &= ~_BV(LED_PIN)
+
+Arduino Chip Data Sheet: 
+  http://www.atmel.com/Images/doc8161.pdf
+
+Sites for further information on interrupts:
+  https://sites.google.com/site/qeewiki/books/avr-guide/external-interrupts-on-the-atmega328
+  http://www.gammon.com.au/forum/?id=11488
+  http://www.cs.washington.edu/education/courses/csep567/10wi/lectures/Lecture7.pdf
 
 */
-
-// PORTD &= ~_BV(3)   -- PORTD = PORTD AND (BITWISE NOT (00000100))
-// #define LED_ON() PORTB |= _BV(LED_PIN)
-// #define LED_OFF() PORTB &= ~_BV(LED_PIN)
-
-/*
-
-https://sites.google.com/site/qeewiki/books/avr-guide/external-interrupts-on-the-atmega328
-
-http://www.gammon.com.au/forum/?id=11488
-http://www.cs.washington.edu/education/courses/csep567/10wi/lectures/Lecture7.pdf
-
-ISR(INT0_vect) {
-  LED_OFF();
-}
-void setup() {
-  pinMode(13, OUTPUT);
-  // enable INT0 interrupt on change
-  EICRA = 0×03;  // INT0 – rising edge on SCL
-  EIMSK = 0×01;  // enable only int0
-}
-
-void loop() {
-  LED_ON();
-  delayMicroseconds(20);
-}
-*/
+#define INT0_pin  2
+#define INT1_pin  3
 
 #define TIMER_US_PER_TICK 4 // 16MHz / 64 cycles per tick
 #define TIMER_OVERFLOW_US TIMER_US_PER_TICK * 65536 // timer1 is 16bit
 
 volatile int timer1_overflow = 0;
 
-volatile unsigned char sendResult = 0;
+volatile unsigned char send = 0;
 
-volatile unsigned char isRunning = 0;
+volatile long resultCnt = 0; 
 
-ISR(TIMER1_OVF_vect) {
-  // keep track of timer1 overflows.  
-  // these should happen every TIMER_OVERFLOW_US microseconds (approx 4 per second at 16MHz clockspeed)
+ISR(TIMER1_OVF_vect) 
+{
   timer1_overflow += 1;
 };
 
-void startTimerISR(){
-  //must check that timer is not already running
-  //start timer 1 when gate attached to pin 2 triggers 
+ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers 
+  
+{ 
+  if(!TCCR1B) //Check timer 1 is not already running
+  { 
+    TCNT1 = 0; // resets timer 1 counter
+    timer1_overflow = 0;
+    TIMSK1 = 0x01; //Timer overflow interrupt enable
+    TCCR1A = 0x00;  // Normal Timer Operation                                                                 
+    TCCR1B |= ( _BV(CS10) | _BV(CS11) ); // clock/64 
+  }
 }
 
-void stopTimerISR(){
-  //must check that timer is already running
-  //stop timer 1 when gate attached to pin 3 triggers
+ISR(INT1_vect) //Stop timer 1 when gate attached to pin 3 trigger
+{
+  if(TCCR1B) //Check Timer 1 is running
+  {
+    TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12)); //Stop timer 1
+    resultCnt = timer1_overflow * 65536; 
+    resultCnt += TCNT1;
+    send = 1;
+  }
 }
-long microsecs() {
-  // for debugging
+
+
+long microsecs()  //for debugging only
+{
   long us;
   us = timer1_overflow * 65536;
   us += TCNT1;
@@ -85,35 +132,34 @@ long microsecs() {
 }
 
 //This will be used to store result and send to host machine
-union bindata {
+union bindata 
+{
   unsigned long val;
   byte b[4];
-} result;
+} resultus;
 
 void sendResult()
 {
     Serial.write('H');
-    Serial.write(result.b,4);
+    Serial.write(resultus.b,4);
     Serial.write('E');
 }
   
 void setup()
 {
   Serial.begin(9600);
-  attachInterrupt(0, startTimerISR, FALLING);
-  attachInterrupt(1, stopTimerISR, FALLING);
-
-  //setting up timer
-  TCNT1 = 0; // resets timer 1 counter
-  TCCR1A = 0x00;   //Normal Timer Operation                                                                 
-  TCCR1B = 0x03; // clock/64 = increments every 3.2us  - overflows in 209.7mS  
-  TIMSK1 = 0x01; // timer1 overflow interrupt enable TOIE1=1. atmel_doc2545 p. 135 
-
+  //Set up external interrupts
+  pinMode(INT0_pin, INPUT);
+  pinMode(INT1_pin, INPUT);
+  EICRA |= ( _BV(ISC01) | _BV(ISC11) ); //set INT0 and INT1 to falling edge detect
+  EIMSK |= ( _BV(INT0) | _BV(INT1) );  //enable INT0 and INT1 interrupts
+  sei(); // enables interrupts
 }
 
 void loop()
 {
-  result.val = 0xFFFFF;
-  sendResult();
-  delay(1000)
+  if(send){
+    resultus.val = resultCnt * TIMER_US_PER_TICK; //turns Timer count to microseconds
+    sendResult();
+  }
 }
