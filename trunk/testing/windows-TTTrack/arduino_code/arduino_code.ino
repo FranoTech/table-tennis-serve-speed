@@ -159,7 +159,9 @@ void setup()
 void loop()
 {
   if(send){
+    cli();
     resultus.val = resultCnt * TIMER_US_PER_TICK; //turns Timer count to microseconds
     sendResult();
+    sei();
   }
 }
