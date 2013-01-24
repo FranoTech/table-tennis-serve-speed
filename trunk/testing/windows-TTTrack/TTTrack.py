@@ -41,7 +41,6 @@ def SerialMonitorThread(port):
     thread_exit.set()
     thread.exit()
 
-
 #Serial Port Utility Functions
 #########################################
 
