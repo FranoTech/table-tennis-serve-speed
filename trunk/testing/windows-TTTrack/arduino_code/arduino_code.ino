@@ -100,25 +100,21 @@ ISR(TIMER1_OVF_vect)
 ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers 
   
 { 
-  if(!TCCR1B) //Check timer 1 is not already running
-  { 
-    TCNT1 = 0; // resets timer 1 counter
-    timer1_overflow = 0;
-    TIMSK1 = 0x01; //Timer overflow interrupt enable
-    TCCR1A = 0x00;  // Normal Timer Operation                                                                 
-    TCCR1B |= ( _BV(CS10) | _BV(CS11) ); // clock/64 
-  }
+  EIMSK = _BV(INT1); //disable int0 enable int1
+  TCNT1 = 0; // resets timer 1 counter
+  timer1_overflow = 0;
+  TIMSK1 = 0x01; //Timer overflow interrupt enable
+  TCCR1A = 0x00;  // Normal Timer Operation                                                                 
+  TCCR1B |= ( _BV(CS10) | _BV(CS11) ); // clock/64 
 }
 
 ISR(INT1_vect) //Stop timer 1 when gate attached to pin 3 trigger
 {
-  if(TCCR1B) //Check Timer 1 is running
-  {
-    TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12)); //Stop timer 1
-    resultCnt = timer1_overflow * 65536; 
-    resultCnt += TCNT1;
-    send = 1;
-  }
+  EIMSK = 0; //disable int1  
+  TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12)); //Stop timer 1
+  resultCnt = timer1_overflow * 65536; 
+  resultCnt += TCNT1;
+  send = 1;
 }
 
 
@@ -152,7 +148,7 @@ void setup()
   pinMode(INT0_pin, INPUT);
   pinMode(INT1_pin, INPUT);
   EICRA |= ( _BV(ISC01) | _BV(ISC11) ); //set INT0 and INT1 to falling edge detect
-  EIMSK |= ( _BV(INT0) | _BV(INT1) );  //enable INT0 and INT1 interrupts
+  EIMSK = _BV(INT0);  //enable INT0 
   sei(); // enables interrupts
 }
 
@@ -162,6 +158,7 @@ void loop()
     cli();
     resultus.val = resultCnt * TIMER_US_PER_TICK; //turns Timer count to microseconds
     sendResult();
+    EIMSK = _BV(INT0); //enable INT0 again
     sei();
   }
 }
