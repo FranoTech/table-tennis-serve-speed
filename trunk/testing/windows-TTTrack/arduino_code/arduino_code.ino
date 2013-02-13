@@ -97,6 +97,9 @@ ISR(TIMER1_OVF_vect)
   timer1_overflow += 1;
 };
 
+//USE TIMER 2 not TIMER 0 (0 is used by delay etc)
+//http://letsmakerobots.com/node/28278
+
 ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers 
   
 { 
