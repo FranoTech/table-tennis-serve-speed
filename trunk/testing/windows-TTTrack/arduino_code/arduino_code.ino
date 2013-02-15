@@ -1,5 +1,5 @@
 /*
-Target: Arduino Uno
+Target: Arduino Mega
 Site: code.google.com/table-tennis-serve-speed
 Desc: Arduino is attached to two specially designed light gates
       One on pin 2 and the other on pin 3
@@ -86,52 +86,50 @@ Sites for further information on interrupts:
 #define TIMER_US_PER_TICK 4 // 16MHz / 64 cycles per tick
 #define TIMER_OVERFLOW_US TIMER_US_PER_TICK * 65536 // timer1 is 16bit
 
-volatile int timer1_overflow = 0;
+volatile int timer3_overflow = 0;
 
 volatile unsigned char send = 0;
 
 volatile long resultCnt = 0; 
 
-ISR(TIMER1_OVF_vect) 
+ISR(TIMER3_OVF_vect) 
 {
-  timer1_overflow += 1;
+  timer3_overflow += 1;
 };
-
-//USE TIMER 2 not TIMER 0 (0 is used by delay etc)
-//http://letsmakerobots.com/node/28278
 
 ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers 
   
 { 
-  if(TCNT0 > 310)
-  {
-    TCCR0B =0; //stop Timer 0
-    TCNT0 = 0; //reset Timer 0
-    EIMSK = _BV(INT1); //disable int0 and enable int1
+  if(TCNT1 > 300)
+    {
+      TCCR1B =0; //stop Timer 1
+      TCNT1 = 0; //reset Timer 1
+      timer3_overflow = 0; //timer overflow reset
+      TIMSK3 |= _BV(TOIE3) //Timer 3 overflow enabled
+      TCCR3A = 0x00; //Normal timer operation
+      TCCR3B |= ( _BV(CS30) | _BV(CS31) ); //clock/64
+      EIMSK = _BV(INT1); //enable INT1 disable INT0
+    }
     TCNT1 = 0; // resets timer 1 counter
-    timer1_overflow = 0;
-    TIMSK1 = 0x01; //Timer overflow interrupt enable
     TCCR1A = 0x00;  // Normal Timer Operation                                                                 
-    TCCR1B |= ( _BV(CS10) | _BV(CS11) ); // clock/64 
-  }
-  TCNT0=0;
-  TCCR0B = _BV(CS00) | _BV(CS01); 
+    TCCR1B |= ( _BV(CS10) | _BV(CS11) ); // clock/64      
 }
 
 ISR(INT1_vect) //Stop timer 1 when gate attached to pin 3 trigger
 {
   if(TCNT0 > 310)
   {
-    TCCR0B = 0;
-    TCNT0 = 0;
-    EIMSK = 0; //disable int1  
+    TCCR3B &= ~(_BV(CS30) | _BV(CS31) | _BV(CS32)); //Stop timer 3
     TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12)); //Stop timer 1
+    TCCR1B = 0; //stop Timer 1
+    TCNT1 = 0; //reset Timer 1
+    EIMSK = 0x00; //disable int1 and int0 
     resultCnt = timer1_overflow * 65536; 
-    resultCnt += TCNT1;
+    resultCnt += TCNT3;
     send = 1;
   }
-  TCNT0 = 0;
-  TCCR0B =  _BV(CS00) | _BV(CS01); 
+  TCNT1 = 0;
+  TCCR1B =  _BV(CS10) | _BV(CS11); 
 }
 
 
