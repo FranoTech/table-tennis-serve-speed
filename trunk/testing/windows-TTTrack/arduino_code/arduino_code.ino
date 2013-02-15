@@ -80,17 +80,19 @@ Sites for further information on interrupts:
   http://www.cs.washington.edu/education/courses/csep567/10wi/lectures/Lecture7.pdf
 
 */
-#define INT0_pin  2
-#define INT1_pin  3
+#define INT0_pin  21
+#define INT1_pin  20
 
 #define TIMER_US_PER_TICK 4 // 16MHz / 64 cycles per tick
 #define TIMER_OVERFLOW_US TIMER_US_PER_TICK * 65536 // timer1 is 16bit
 
 volatile int timer3_overflow = 0;
 
-volatile unsigned char send = 0;
+volatile unsigned char snd = 0;
 
 volatile long resultCnt = 0; 
+
+volatile int sigPin=0;
 
 ISR(TIMER3_OVF_vect) 
 {
@@ -98,17 +100,18 @@ ISR(TIMER3_OVF_vect)
 };
 
 ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers 
-  
 { 
-  if(TCNT1 > 300)
-    {
+   if(TCNT1 > 300)
+   {
+      sigPin=1;
       TCCR1B =0; //stop Timer 1
       TCNT1 = 0; //reset Timer 1
       timer3_overflow = 0; //timer overflow reset
-      TIMSK3 |= _BV(TOIE3) //Timer 3 overflow enabled
+      TIMSK3 |= _BV(TOIE3); //Timer 3 overflow enabled
       TCCR3A = 0x00; //Normal timer operation
       TCCR3B |= ( _BV(CS30) | _BV(CS31) ); //clock/64
-      EIMSK = _BV(INT1); //enable INT1 disable INT0
+      EIMSK = 0;
+      EIMSK |= _BV(INT1); //enable INT1 disable INT0
     }
     TCNT1 = 0; // resets timer 1 counter
     TCCR1A = 0x00;  // Normal Timer Operation                                                                 
@@ -117,16 +120,17 @@ ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers
 
 ISR(INT1_vect) //Stop timer 1 when gate attached to pin 3 trigger
 {
-  if(TCNT0 > 310)
+  if(TCNT0 > 300)
   {
     TCCR3B &= ~(_BV(CS30) | _BV(CS31) | _BV(CS32)); //Stop timer 3
     TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12)); //Stop timer 1
     TCCR1B = 0; //stop Timer 1
     TCNT1 = 0; //reset Timer 1
     EIMSK = 0x00; //disable int1 and int0 
-    resultCnt = timer1_overflow * 65536; 
+    resultCnt = timer3_overflow * 65536; 
     resultCnt += TCNT3;
-    send = 1;
+    snd = 1;
+    sigPin=0;
   }
   TCNT1 = 0;
   TCCR1B =  _BV(CS10) | _BV(CS11); 
@@ -136,20 +140,20 @@ ISR(INT1_vect) //Stop timer 1 when gate attached to pin 3 trigger
 long microsecs()  //for debugging only
 {
   long us;
-  us = timer1_overflow * 65536;
+  us = timer3_overflow * 65536;
   us += TCNT1;
   us *= TIMER_US_PER_TICK;
   return us;
 }
 
-//This will be used to store result and send to host machine
+//This will be used to store result and snd to host machine
 union bindata 
 {
   unsigned long val;
   byte b[4];
 } resultus;
 
-void sendResult()
+void sndResult()
 {
     Serial.write('H');
     Serial.write(resultus.b,4);
@@ -158,21 +162,23 @@ void sendResult()
   
 void setup()
 {
+  pinMode(13, OUTPUT);
   Serial.begin(9600);
   //Set up external interrupts
   pinMode(INT0_pin, INPUT);
   pinMode(INT1_pin, INPUT);
-  EICRA |= ( _BV(ISC00 | _BV(ISC10) ); //set INT0 and INT1 to change detect
-  EIMSK = _BV(INT0);  //enable INT0 
+  EICRA |= ( _BV(ISC00) | _BV(ISC10) ); //set INT0 and INT1 to change detect
+  EIMSK |= _BV(INT0);  //enable INT0 
   sei(); // enables interrupts
 }
 
 void loop()
 {
-  if(send){
+  digitalWrite(13,sigPin);
+  if(snd){
     cli();
     resultus.val = resultCnt * TIMER_US_PER_TICK; //turns Timer count to microseconds
-    sendResult();
+    sndResult();
     EIMSK = _BV(INT0); //enable INT0 again
     sei();
   }
