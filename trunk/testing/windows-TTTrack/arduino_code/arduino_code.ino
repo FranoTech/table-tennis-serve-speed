@@ -81,7 +81,7 @@ Sites for further information on interrupts:
 
 */
 #define INT0_pin  21
-#define INT1_pin  20
+#define INT4_pin  2
 
 #define TIMER_US_PER_TICK 4 // 16MHz / 64 cycles per tick
 #define TIMER_OVERFLOW_US TIMER_US_PER_TICK * 65536 // timer1 is 16bit
@@ -99,7 +99,7 @@ ISR(TIMER3_OVF_vect)
   timer3_overflow += 1;
 };
 
-ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers 
+ISR(INT0_vect) //Start timer 1 when gate attached to pin 21 triggers 
 { 
    if(TCNT1 > 300)
    {
@@ -109,16 +109,16 @@ ISR(INT0_vect) //Start timer 1 when gate attached to pin 2 triggers
       timer3_overflow = 0; //timer overflow reset
       TIMSK3 |= _BV(TOIE3); //Timer 3 overflow enabled
       TCCR3A = 0x00; //Normal timer operation
+      TCNT3 = 0;
       TCCR3B |= ( _BV(CS30) | _BV(CS31) ); //clock/64
-      EIMSK = 0;
-      EIMSK |= _BV(INT1); //enable INT1 disable INT0
+      EIMSK = _BV(INT4); //enable INT1 disable INT0
     }
     TCNT1 = 0; // resets timer 1 counter
     TCCR1A = 0x00;  // Normal Timer Operation                                                                 
     TCCR1B |= ( _BV(CS10) | _BV(CS11) ); // clock/64      
 }
 
-ISR(INT1_vect) //Stop timer 1 when gate attached to pin 3 trigger
+ISR(INT4_vect) //Stop timer 1 when gate attached to pin 3 trigger
 {
   if(TCNT0 > 300)
   {
@@ -127,8 +127,6 @@ ISR(INT1_vect) //Stop timer 1 when gate attached to pin 3 trigger
     TCCR1B = 0; //stop Timer 1
     TCNT1 = 0; //reset Timer 1
     EIMSK = 0x00; //disable int1 and int0 
-    resultCnt = timer3_overflow * 65536; 
-    resultCnt += TCNT3;
     snd = 1;
     sigPin=0;
   }
@@ -166,9 +164,10 @@ void setup()
   Serial.begin(9600);
   //Set up external interrupts
   pinMode(INT0_pin, INPUT);
-  pinMode(INT1_pin, INPUT);
-  EICRA |= ( _BV(ISC00) | _BV(ISC10) ); //set INT0 and INT1 to change detect
-  EIMSK |= _BV(INT0);  //enable INT0 
+  pinMode(INT4_pin, INPUT);
+  EICRA |=  _BV(ISC00); //set INT0 and INT1 to change detect
+  EICRB |= _BV(ISC40);
+  EIMSK = _BV(INT0);  //enable INT0 
   sei(); // enables interrupts
 }
 
@@ -177,6 +176,8 @@ void loop()
   digitalWrite(13,sigPin);
   if(snd){
     cli();
+    resultCnt = timer3_overflow * 65536; 
+    resultCnt += TCNT3;
     resultus.val = resultCnt * TIMER_US_PER_TICK; //turns Timer count to microseconds
     sndResult();
     EIMSK = _BV(INT0); //enable INT0 again
