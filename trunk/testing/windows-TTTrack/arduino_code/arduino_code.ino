@@ -80,6 +80,7 @@ Sites for further information on interrupts:
   http://www.cs.washington.edu/education/courses/csep567/10wi/lectures/Lecture7.pdf
 
 */
+#define DETECT 300
 #define INT0_pin  21
 #define INT4_pin  2
 
@@ -101,7 +102,7 @@ ISR(TIMER3_OVF_vect)
 
 ISR(INT0_vect) //Start timer 1 when gate attached to pin 21 triggers 
 { 
-   if(TCNT1 > 300)
+   if(TCNT1 > DETECT)
    {
       sigPin=1;
       TCCR1B =0; //stop Timer 1
@@ -120,17 +121,19 @@ ISR(INT0_vect) //Start timer 1 when gate attached to pin 21 triggers
 
 ISR(INT4_vect) //Stop timer 1 when gate attached to pin 3 trigger
 {
-  if(TCNT0 > 300)
+  if(TCNT1 > DETECT)
   {
+    sigPin=0;
     TCCR3B &= ~(_BV(CS30) | _BV(CS31) | _BV(CS32)); //Stop timer 3
     TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12)); //Stop timer 1
     TCCR1B = 0; //stop Timer 1
     TCNT1 = 0; //reset Timer 1
+    TIMSK3 = 0;
     EIMSK = 0x00; //disable int1 and int0 
     snd = 1;
-    sigPin=0;
   }
   TCNT1 = 0;
+  TCCR1A = 0x00;
   TCCR1B =  _BV(CS10) | _BV(CS11); 
 }
 
@@ -175,12 +178,11 @@ void loop()
 {
   digitalWrite(13,sigPin);
   if(snd){
-    cli();
     resultCnt = timer3_overflow * 65536; 
     resultCnt += TCNT3;
     resultus.val = resultCnt * TIMER_US_PER_TICK; //turns Timer count to microseconds
     sndResult();
+    snd=0;
     EIMSK = _BV(INT0); //enable INT0 again
-    sei();
   }
 }
