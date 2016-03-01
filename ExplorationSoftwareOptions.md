@@ -1,0 +1,43 @@
+#The use of OpenCV in conjunction with a webcam. An exploration of our software options.
+
+# Introduction #
+
+Here we try to determine the viability of using a camera and OpenCV to accurately determine the serve speed of a table tennis ball. The spec calls for a cheap system so ideally we will use consumer grade camera and software that will run on even a low-spec laptop without GPU acceleration.
+
+
+# Questions #
+
+The main questions and options to be explored:
+  * **What frame rate does the camera need:** Assuming a table of 2.74m in length and a ball traveling at 112km/h or 31m/s (considered a very fast serve) the ball will cross the table in 2.65 frames at 30fps and 5.3 frames at 60 fps. So it is likely we will need a minimum of 60fps to have enough frames to analyze in one serve.
+  * **Can we get a suitable camera at a reasonable price:** 60fps seems to be the maximum frame rate we can find for a consumer grade webcam. A potentially suitable example is listed here: http://www.pixmania.ie/ie/uk/11946366/art/computer-gear/12mp-web-cam-and-micropho.html If we need a higher frame rate there are reasonably affordable high-speed cameras that we could use but it would be unlikely we could do real time analysis with it: http://www.pixmania.ie/ie/uk/9636355/art/casio/exilim-high-speed-ex-zr10.html
+
+  * **How should we track the ball:** To be filled in
+  * **How high should we mount the camera** This may be a problem
+  * **Useful Tutorials:**
+
+> Tracking Coloured Objects
+> http://www.aishack.in/2010/07/tracking-colored-objects-in-opencv/
+
+> Fast Thresholding:
+> http://www.aishack.in/2011/05/a-super-fast-thresholding-technique/
+
+> Detect circles
+> http://www.aishack.in/2010/04/hough-circles-in-opencv/
+
+> Detect corners
+> http://www.aishack.in/2010/05/corner-detection-in-opencv/
+
+> Creating guis
+> http://www.aishack.in/2010/02/highgui-creating-interfaces/
+
+> Resize Image
+> http://linuxconfig.org/resize-an-image-with-opencv-cvresize-function
+
+> Grab lower res image
+> http://stackoverflow.com/questions/8339077/decrease-image-resolution-in-opencv
+
+> HSV explained
+> http://132.68.58.138/labs/anat/hsvspace.pdf
+
+> Get difference between two frames
+> http://sublimated.wordpress.com/2011/01/25/image-difference-with-opencv/

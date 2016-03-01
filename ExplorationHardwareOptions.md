@@ -1,0 +1,14 @@
+#Here we detail the exploration of a hardware solution.
+
+# Introduction #
+
+Add your content here.
+
+
+# Questions #
+
+Add your content here. What challenges does your side of the project face?
+
+  * Text in **bold** or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages

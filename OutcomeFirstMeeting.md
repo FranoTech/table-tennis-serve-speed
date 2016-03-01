@@ -1,0 +1,18 @@
+#Info from our first meeting with Rena
+
+# Introduction #
+
+We met Rena at the kingfisher and learned more about what we will need her requirements are for the project. We also met some members of the mechanical engineering team who will be working on the mounts for our sensors/camera.
+
+They do practice in the Kingfisher on Saturdays from 10-12 if anyone wants to get more details or video footage.
+
+# Details #
+
+Important info the meeting:
+  * **Usability** Rena wants this to be simple to set up and easy to use. She suggested we get the device to 'speak' the speed rather than display it so that it can be used without moving from the serving position
+  * **Laptop** It is safe to assume they will have a laptop available so whatever we make (hardware or software) could be a usb device with control software on the laptop.
+  * **Competition or Practice** The device will only be used during practice so we will not need to worry about the ball going both directions or competition rules.
+  * **Where to measure speed** Can be measured anywhere on table that suits us. Serves will always be between both sides of the tables and are required to bounce on ether side. The bat is not supposed to cross the white line-- but occasionally does.
+  * Stability**Nothing is likely to bang off the table
+  * Mechanical** Biggest challenge is making it easy to set up and correctly align beams (and building something sturdy enough that small bumps will not disrupt the beams)
+  * **Video** I took some video of some serves and cut out the not so relevant bits. It's not much fun to watch but could be used for analysis. Link here: http://dl.dropbox.com/u/44379402/table-tennis.mp4

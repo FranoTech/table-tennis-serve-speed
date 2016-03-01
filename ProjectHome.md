@@ -1,0 +1,1 @@
+This is a college project that explores the use of hardware and/or software solutions to accurately determine the speed of a table tennis serve.
